@@ -58,8 +58,8 @@
 		67EFDC302464889800531D93 /* CheckIt */ = {
 			isa = PBXGroup;
 			children = (
-				67EFDC312464889800531D93 /* AppDelegate.swift */,
 				67EFDC332464889800531D93 /* SceneDelegate.swift */,
+				67EFDC312464889800531D93 /* AppDelegate.swift */,
 				67EFDC352464889800531D93 /* ViewController.swift */,
 				67EFDC372464889800531D93 /* Main.storyboard */,
 				67EFDC3A2464889900531D93 /* Assets.xcassets */,

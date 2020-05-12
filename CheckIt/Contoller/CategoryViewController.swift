@@ -7,30 +7,50 @@
 //
 
 import UIKit
-import CoreData
+import RealmSwift
+import ChameleonFramework
 
-class CategoryViewController: UITableViewController {
+class CategoryViewController: SwipeTableViewController {
     
-    var categories = [Category]()
+    let realm = try! Realm()
     
-    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+//   initalizes the Realm entity Category object
+//   var categories = [Category]()
 
+//   initalizes the Realm entity Categegory object as a Results object for loading and appeneding data
+    var categories: Results<Category>?
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
         loadCategories()
     }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        guard let navBar = navigationController?.navigationBar else {
+            fatalError("Navigation controller does not exist")
+        }
+        
+        navBar.backgroundColor = UIColor(hexString: "1D9BF6")
+    }
 
     //MARK: - Tableview Datasource Methods
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        categories.count
+        // nil coalescing operator
+        return categories?.count ?? 1
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath)
-        let category = categories[indexPath.row]
+        // sets the cell from the super class.
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
         
-        cell.textLabel?.text = category.name
+        if let category = categories?[indexPath.row] {
+            cell.textLabel?.text = category.name
+            
+            cell.backgroundColor = HexColor(category.cellColor)
+            
+            cell.textLabel?.textColor = UIColor(contrastingBlackOrWhiteColorOn: HexColor(category.cellColor)!, isFlat: true)
+        }
         
         return cell
     }
@@ -48,7 +68,7 @@ class CategoryViewController: UITableViewController {
         
         // intializes the cell at the indexPath of the selected row using selectedCategory from the ToDoListVC
         if let indexPath = tableView.indexPathForSelectedRow {
-            destinationVC.selectedCategory = categories[indexPath.row]
+            destinationVC.selectedCategory = categories?[indexPath.row]
         }
     }
     
@@ -59,12 +79,14 @@ class CategoryViewController: UITableViewController {
         let alert = UIAlertController(title: "Add New CheckIt Category", message: "", preferredStyle: .alert)
         
         let action = UIAlertAction(title: "Add Category", style: .default) { (action) in
-            let newCategory = Category(context: self.context)
+            let newCategory = Category()
             newCategory.name = textField.text!
+            newCategory.cellColor = UIColor.randomFlat().hexValue()
             
-            self.categories.append(newCategory)
+//            Not needed due to Results autoupdating
+//            self.categories.append(newCategory)
             
-            self.saveCategory()
+            self.save(category: newCategory)
         }
         
         alert.addTextField { (alertTextField) in
@@ -79,9 +101,11 @@ class CategoryViewController: UITableViewController {
 
     //MARK: - Data Manipulation Methods
     
-    func saveCategory() {
+    func save(category: Category) {
         do {
-            try context.save()
+            try realm.write {
+                realm.add(category)
+            }
         } catch {
             print("Error saving context: \(error)")
         }
@@ -90,19 +114,24 @@ class CategoryViewController: UITableViewController {
     }
     
     func loadCategories() {
-        let request : NSFetchRequest<Category> = Category.fetchRequest()
-        
-        do {
-            categories = try context.fetch(request)
-        } catch {
-            print("Error while fetching data from context: \(error)")
-        }
+        // itializes categories with new saved
+        categories = realm.objects(Category.self)
         
         tableView.reloadData()
     }
-    
-    
-    
-    
-    
+
+    // overridden func from superclass
+    override func updateModelWithCellDeletion(at indexPath: IndexPath) {
+        if let categoryForDeletion = self.categories?[indexPath.row] {
+            do {
+                try self.realm.write{
+                    //How to delete
+                    self.realm.delete(categoryForDeletion)
+                }
+            } catch {
+                print("Error deleting data:\(error)")
+            }
+        }
+    }
 }
+

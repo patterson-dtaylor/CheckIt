@@ -45,6 +45,8 @@ class CategoryViewController: SwipeTableViewController {
         let cell = super.tableView(tableView, cellForRowAt: indexPath)
         
         if let category = categories?[indexPath.row] {
+            cell.selectionStyle = .none
+            
             cell.textLabel?.text = category.name
             
             cell.backgroundColor = HexColor(category.cellColor)
@@ -81,12 +83,22 @@ class CategoryViewController: SwipeTableViewController {
         let action = UIAlertAction(title: "Add Category", style: .default) { (action) in
             let newCategory = Category()
             newCategory.name = textField.text!
-            newCategory.cellColor = UIColor.randomFlat().hexValue()
+            if newCategory.name != "" {
+                newCategory.cellColor = UIColor.randomFlat().hexValue()
+                
+                //            Not needed due to Results autoupdating
+                //            self.categories.append(newCategory)
+                
+                self.save(category: newCategory)
+            } else {
+                let alert = UIAlertController(title: "Sorry, category name cannot be blank!", message: "", preferredStyle: .alert)
+                let action = UIAlertAction(title: "Ok", style: .cancel)
+                
+                alert.addAction(action)
+                
+                self.present(alert, animated: true, completion: nil)
+            }
             
-//            Not needed due to Results autoupdating
-//            self.categories.append(newCategory)
-            
-            self.save(category: newCategory)
         }
         
         alert.addTextField { (alertTextField) in
